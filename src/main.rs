@@ -5,13 +5,24 @@ use dioxus_desktop::{Config, WindowBuilder};
 use std::fs;
 use std::io;
 use std::path::Path;
+use qrcodegen::{QrCode, QrCodeEcc};
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 enum Action {
     None,
     Retire,
     Restore,
     Inspect,
+}
+impl Action {
+    fn get_string(self: Action) -> String {
+        match self {
+            Action::None => return "".to_string(),
+            Action::Retire => return "retire:".to_string(),
+            Action::Restore => return "restore:".to_string(),
+            Action::Inspect => return "inspect".to_string(),
+        }
+    }
 }
 
 #[derive(PartialEq, Props)]
@@ -26,6 +37,18 @@ fn SelectedSku(cx: Scope) -> Element {
         //"{cx.props.sku}"
         "{selected_sku.read().sku}"
     })
+}
+// temp function
+fn print_qr(qr: &QrCode) {
+    let border: i32 = 4;
+    for y in -border .. qr.size() + border {
+        for x in -border .. qr.size() + border {
+            let c: char = if qr.get_module(x, y) { '█' } else { ' ' };
+            print!("{0}{0}", c);
+        }
+        println!();
+    }
+    println!();
 }
 
 fn ProductGrid(cx: Scope) -> Element {
@@ -221,6 +244,7 @@ fn App(cx: Scope) -> Element {
     let mut quantity = use_state(cx, || 0);
     let action = use_state(cx, || Action::None); // no mut per lint?
     let mut action_text = "".to_string();
+    let mut qr = QrCode::encode_text("test", QrCodeEcc::Medium).unwrap();
 
     cx.render(rsx!(
         style { include_str!("../assets/skurcode.css") }
@@ -232,21 +256,32 @@ fn App(cx: Scope) -> Element {
             div { class: "action-buffer"},
             div { class: "action-tray",
                 div{ class: "action-text",
-                    onclick: move |_| println!("generate QR code"),
-                    if action.get() != &Action::None{
+                    onclick: move |_| {
+                        let qr_text: String; // lint, mut not needed?
+                        if action.get() == &Action::None {
+                            qr_text = format!("{}*{}", &selected_sku.read().sku,quantity);
+                        }
+                        else {
+                            qr_text = format!("{}{}",action.get().get_string(),&selected_sku.read().sku);
+                        }
+                        qr = QrCode::encode_text(&qr_text, QrCodeEcc::Medium).unwrap();
+                        print_qr(&qr)
+                    },
+                    /*if action.get() != &Action::None{
                         match action.get() {
                             &Action::Inspect => action_text.push_str("inspect:"),
                             &Action::Retire => action_text.push_str("retire:"),
                             &Action::Restore => action_text.push_str("restore:"),
                             _ => println!("Impossible"),
                         }
-                    },
+                    },*/ // this is redunant and now handled by Action.get_string
                     if action.get() == &Action::None {
                         rsx!(textarea { // without rsx! says invalid
                             value: "{selected_sku.read().sku}*{quantity}"
                         })
                     }
                     else {
+                        action_text = action.get().get_string();
                         rsx!(textarea {
                             value: "{action_text}{selected_sku.read().sku}"
                         })
@@ -257,7 +292,7 @@ fn App(cx: Scope) -> Element {
                     "Sell"
                 },
                 button { class: "stock-button",
-                    onclick: move |_| quantity += 1,
+                    onclick: move |_| {quantity += 1; action.set(Action::None)},
                     "Stock"
                 }
                 button { class: "inspect-button",
@@ -275,18 +310,6 @@ fn App(cx: Scope) -> Element {
 
             }
         }
-
-        // maybe hashmap? map |sku, id|
-        /*products.iter().map(|sku| rsx!{
-            img {
-                src: "./products/{sku}",
-                onclick: move |_| input_sku(sku),
-            }
-        })*/
-        /*for (sku, id) in hash_products {
-           p{ "{sku}"},
-            "{id}",
-        }*/
     ))
 }
 
