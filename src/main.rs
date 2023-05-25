@@ -1,12 +1,10 @@
 #![allow(non_snake_case)]
 #![allow(unused_variables)]
-#[allow(dead_code)]
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
 use std::fs;
 use std::io;
 use std::path::Path;
-//use std::collections::HashMap;
 
 #[derive(PartialEq)]
 enum Action {
@@ -16,27 +14,6 @@ enum Action {
     Inspect,
 }
 
-#[derive(PartialEq, Props)]
-struct Product {
-    #[props(into)]
-    content: String,
-}
-
-fn ClickableProduct(cx: Scope<Product>) -> Element {
-    let selected_sku = use_shared_state::<Selection>(cx).unwrap();
-
-    let input_sku = move |sku: String| {
-        selected_sku.write().sku = sku;
-    };
-    let maybe = cx.props.content.clone();
-    cx.render(rsx! {
-        img {
-            src: "./products/{cx.props.content}",
-            // cannot move out of variables, captured by closure
-            //onclick: move |_| selected_sku.write().sku = maybe,
-        }
-    })
-}
 #[derive(PartialEq, Props)]
 struct Selection {
     #[props(into)]
@@ -52,8 +29,6 @@ fn SelectedSku(cx: Scope) -> Element {
 }
 
 fn ProductGrid(cx: Scope) -> Element {
-    //let product_array: ProductArray;
-    //product_array.all = get_image_file_names().unwrap();
     let products = get_image_file_names().unwrap();
     let selected_sku = use_shared_state::<Selection>(cx).unwrap();
 
@@ -221,14 +196,6 @@ fn ProductGrid(cx: Scope) -> Element {
             onclick: move |_| input_sku("ZONAI".to_string()),
         }
     })
-    /*cx.render(rsx! {
-        product_array.all.iter().map(|sku| rsx!{
-            img {
-                src: "./products/{sku}",
-                //onclick: move |_| input_sku(format!("{}",sku.clone())),
-            }
-        })
-    })*/
 }
 
 fn get_image_file_names() -> Result<Vec<String>, io::Error> {
@@ -244,26 +211,22 @@ fn get_image_file_names() -> Result<Vec<String>, io::Error> {
             }
         }
     }
-    // should actually remove all .png endings, then
-    // add them back in img.src:
     Ok(file_names)
 }
 
 fn App(cx: Scope) -> Element {
-   // let products = get_image_file_names().unwrap();
-    //let selected_sku = use_state(cx, || "none".to_string());
     use_shared_state_provider(cx, || Selection{sku:"none".to_string()});
-    //let products = use_state(cx, || ProductArray::new);
     let products = get_image_file_names().unwrap();
     let selected_sku = use_shared_state::<Selection>(cx).unwrap();
     let mut quantity = use_state(cx, || 0);
-    let mut action = use_state(cx, || Action::None);
+    let action = use_state(cx, || Action::None); // no mut per lint?
     let mut action_text = "".to_string();
 
     cx.render(rsx!(
         style { include_str!("../assets/skurcode.css") }
         div { class: "view",
             div { class: "product-grid",
+                onclick: move |_| action.set(Action::None),
                 ProductGrid{},
             }
             div { class: "action-buffer"},
@@ -278,10 +241,19 @@ fn App(cx: Scope) -> Element {
                             _ => println!("Impossible"),
                         }
                     },
-                    SelectedSku{},
+                    if action.get() == &Action::None {
+                        rsx!(textarea { // without rsx! says invalid
+                            value: "{selected_sku.read().sku}*{quantity}"
+                        })
+                    }
+                    else {
+                        rsx!(textarea {
+                            value: "{action_text}{selected_sku.read().sku}"
+                        })
+                    }
                 },
                 button { class: "sell-button",
-                    onclick: move |_| quantity -= 1,
+                    onclick: move |_| {quantity -= 1; action.set(Action::None)},
                     "Sell"
                 },
                 button { class: "stock-button",
@@ -293,9 +265,11 @@ fn App(cx: Scope) -> Element {
                     "Inspect"
                 }
                 button { class: "retire-button",
+                    onclick: move |_| action.set(Action::Retire),
                     "Retire"
                 }
                 button { class: "restore-button",
+                    onclick: move |_| action.set(Action::Restore),
                     "Restore"
                 }
 
