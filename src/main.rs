@@ -53,7 +53,6 @@ fn print_qr(qr: &QrCode) {
 fn to_svg_string(qr: &QrCode, border: i32) -> String {
     assert!(border >= 0, "Border must be non-negative");
     let mut result = String::new();
-    result += "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     result += "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n";
     let dimension = qr.size().checked_add(border.checked_mul(2).unwrap()).unwrap();
     result += &format!(
@@ -73,6 +72,11 @@ fn to_svg_string(qr: &QrCode, border: i32) -> String {
     result += "\" fill=\"#000000\"/>\n";
     result += "</svg>\n";
     result
+}
+
+fn save_svg_from_string(filename: String, svg: String) {
+    fs::write(filename, svg).unwrap();
+    //Ok(())
 }
 
 fn ProductGrid(cx: Scope) -> Element {
@@ -291,7 +295,9 @@ fn App(cx: Scope) -> Element {
                         }
                         show_qr.set(true);
                         qr = QrCode::encode_text(&qr_text, QrCodeEcc::Medium).unwrap();
-                        print_qr(&qr)
+                        //print_qr(&qr)
+                        save_svg_from_string("qr.svg".to_string(),to_svg_string(&qr,1))
+                        //println!("QR generated 'qr.svg")
                     },
                     /*if action.get() != &Action::None{
                         match action.get() {
@@ -342,7 +348,7 @@ fn App(cx: Scope) -> Element {
                     div {
                         class: "overlay-qr",
                         img {
-                            src: "https://via.placeholder.com/200x200.png?text=QR+Code"
+                            src: "./qr.svg"
                         }
                     }
                 })

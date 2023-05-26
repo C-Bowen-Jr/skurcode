@@ -28,10 +28,11 @@ action tray.
  - Inspect: Used to check stock/sold quantiies stored by Inventory Server
  - Retire: Set SKU as being retired
  - Restore: Set SKU as no longer being retired
+ - While in QR display, click to close the overlay
 
  ## WIP State:
- - Currently loads images based on cargo directory, /products needs to be in
-   the same directory as the .exe to function
+ - Currently loads images based on cargo directory, the /products folder needs to
+   be in the same directory as the .exe to function
  - Styling is bare-bones while focus on functionality is being completed
  - Some finer functionality that isn't batteries-included with Dioxus compared
    to the Python/Kivy version need working in
