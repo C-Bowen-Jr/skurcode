@@ -266,20 +266,21 @@ fn get_image_file_names() -> Result<Vec<String>, io::Error> {
 }
 
 fn App(cx: Scope) -> Element {
+    //let products = get_image_file_names().unwrap();
     use_shared_state_provider(cx, || Selection{sku:"none".to_string()});
-    let products = get_image_file_names().unwrap();
     let selected_sku = use_shared_state::<Selection>(cx).unwrap();
     let mut quantity = use_state(cx, || 0);
     let action = use_state(cx, || Action::None); // no mut per lint?
     let mut action_text = "".to_string();
     let mut qr = QrCode::encode_text("test", QrCodeEcc::Medium).unwrap();
-    let mut show_qr = use_state(cx, || false);
+    let show_qr = use_state(cx, || false);
 
     cx.render(rsx!(
         style { include_str!("../assets/skurcode.css") }
         div { class: "view",
             div { class: "product-grid",
-                onclick: move |_| action.set(Action::None),
+                // Doesn't work here, seems to be because of the custom element
+                //onclick: move |_| {quantity.set(0); action.set(Action::None)},
                 ProductGrid{},
             }
             div { class: "action-buffer"},
@@ -293,20 +294,10 @@ fn App(cx: Scope) -> Element {
                         else {
                             qr_text = format!("{}{}",action.get().get_string(),&selected_sku.read().sku);
                         }
-                        show_qr.set(true);
                         qr = QrCode::encode_text(&qr_text, QrCodeEcc::Medium).unwrap();
-                        //print_qr(&qr)
-                        save_svg_from_string("qr.svg".to_string(),to_svg_string(&qr,1))
-                        //println!("QR generated 'qr.svg")
+                        save_svg_from_string("qr.svg".to_string(),to_svg_string(&qr,1));
+                        show_qr.set(true)
                     },
-                    /*if action.get() != &Action::None{
-                        match action.get() {
-                            &Action::Inspect => action_text.push_str("inspect:"),
-                            &Action::Retire => action_text.push_str("retire:"),
-                            &Action::Restore => action_text.push_str("restore:"),
-                            _ => println!("Impossible"),
-                        }
-                    },*/ // this is redunant and now handled by Action.get_string
                     if action.get() == &Action::None {
                         rsx!(textarea { // without rsx! says invalid
                             value: "{selected_sku.read().sku}*{quantity}"
@@ -344,11 +335,16 @@ fn App(cx: Scope) -> Element {
             if *show_qr.get() {
                 rsx!( div { // again, breaks if not in rsx!()
                     id: "overlay",
-                    onclick: move |_| show_qr.set(false),
+                    onclick: move |_| {
+                        show_qr.set(false);
+                        quantity.set(0);
+                        action.set(Action::None)
+                    },
                     div {
                         class: "overlay-qr",
                         img {
-                            src: "./qr.svg"
+                            src: "./qr.svg",
+                            id: "qrcode"
                         }
                     }
                 })
