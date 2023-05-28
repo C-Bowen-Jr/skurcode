@@ -25,6 +25,35 @@ impl Action {
     }
 }
 
+fn QrCodeImg(cx: Scope) -> Element {
+    cx.render(rsx! {
+        img {
+            src: "./qr.svg",
+        }
+    })
+}
+
+#[derive(PartialEq, Props)]
+struct QrParts {
+    #[props(into)]
+    action: String,
+    sku: String,
+    quantity: i32,
+}
+
+impl QrParts {
+    fn Qr_String(&self) -> String {
+        if self.action == "".to_string() {
+            return format!("{}{}", self.sku, self.quantity.to_string());
+        }
+        else {
+            return format!("{}{}", self.action, self.sku);
+        }
+    }
+    fn Qr_File(&self) -> String {
+        format!("./{}.svg", self.Qr_String())
+    }
+}
 #[derive(PartialEq, Props)]
 struct Selection {
     #[props(into)]
@@ -75,7 +104,8 @@ fn to_svg_string(qr: &QrCode, border: i32) -> String {
 }
 
 fn save_svg_from_string(filename: String, svg: String) {
-    fs::write(filename, svg).unwrap();
+    //println!("{}", filename);
+    fs::write(filename, svg).expect("filename failure");
     //Ok(())
 }
 
@@ -274,6 +304,11 @@ fn App(cx: Scope) -> Element {
     let mut action_text = "".to_string();
     let mut qr = QrCode::encode_text("test", QrCodeEcc::Medium).unwrap();
     let show_qr = use_state(cx, || false);
+    let each_qr_part = use_ref(cx, || QrParts{
+                                             action: "".to_string(),
+                                             sku: "".to_string(),
+                                             quantity: 0,
+                                               });
 
     cx.render(rsx!(
         style { include_str!("../assets/skurcode.css") }
@@ -290,12 +325,14 @@ fn App(cx: Scope) -> Element {
                         let qr_text: String; // lint, mut not needed?
                         if action.get() == &Action::None {
                             qr_text = format!("{}*{}", &selected_sku.read().sku,quantity);
+                            each_qr_part.write().sku = selected_sku.read().sku.to_string();
+                            each_qr_part.write().quantity = *quantity.get();
                         }
                         else {
                             qr_text = format!("{}{}",action.get().get_string(),&selected_sku.read().sku);
                         }
                         qr = QrCode::encode_text(&qr_text, QrCodeEcc::Medium).unwrap();
-                        save_svg_from_string("qr.svg".to_string(),to_svg_string(&qr,1));
+                        save_svg_from_string(each_qr_part.read().Qr_File(),to_svg_string(&qr,1));
                         show_qr.set(true)
                     },
                     if action.get() == &Action::None {
@@ -336,6 +373,7 @@ fn App(cx: Scope) -> Element {
                 rsx!( div { // again, breaks if not in rsx!()
                     id: "overlay",
                     onclick: move |_| {
+                        fs::remove_file(each_qr_part.read().Qr_File()).unwrap();
                         show_qr.set(false);
                         quantity.set(0);
                         action.set(Action::None)
@@ -343,8 +381,7 @@ fn App(cx: Scope) -> Element {
                     div {
                         class: "overlay-qr",
                         img {
-                            src: "./qr.svg",
-                            id: "qrcode"
+                            src: "{each_qr_part.read().Qr_File()}",
                         }
                     }
                 })
