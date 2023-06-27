@@ -26,32 +26,81 @@
     width: 780px;
     height: 200px;
     bottom: 0;
-    background-color: #404040;
+    background-color: #404944;
     font-weight: bold;
+    border-top: 4px solid #262926;
 }
 .action-buffer {
     width: 800px;
     height: 200px;
 }
-#action-text {
-    background-color: #eeeeee;
+.action-text {
+    background-color: #303934;
+    border: 2px solid #262926;
+    border-radius: 4px;
     text-align: center;
-    padding: 10px;
+    padding-inline: 4px 10px;
+    padding-block: 10px;
     grid-area: 1 / 2 / span 1 / span 1;
 }
+
+.action-text input {
+    background-color: #303934;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    width: 100%;
+    text-align: -webkit-center;
+}
+
 .sell-button {
+    background-color: orange;
+    color: white;
+    font-size: 3em;
+    font-weight: bold;
+    border: 3px solid #262926;
+    border-radius: 8px;
+    box-shadow: inset 0.85em 0.85em 4em rgb(33,17,0);
     grid-area: 1 / 1 / span 4 / span 1;
 }
 .stock-button {
+    background-color: green;
+    color: white;
+    font-size: 3em;
+    font-weight: bold;
+    border: 3px solid #262926;
+    border-radius: 8px;
+    box-shadow: inset 0.85em 0.85em 4em rgb(50,0,0);
     grid-area: 1 / 3 / span 4 / span 1;
 }
 .inspect-button {
+    background-color: grey;
+    color: white;
+    font-size: 1em;
+    font-weight: bold;
+    border: 1.5px solid #e0e9e4;
+    border-radius: 4px;
+    box-shadow: inset 0.2em 0.2em 4em rgb(0,10,5);
     grid-area: 2 / 2 / span 1 / span 1;
 }
 .retire-button {
+    background-color: grey;
+    color: white;
+    font-size: 1em;
+    font-weight: bold;
+    border: 1.5px solid #e0e9e4;
+    border-radius: 4px;
+    box-shadow: inset 0.2em 0.2em 4em rgb(0,10,5);
     grid-area: 3 / 2 / span 1 / span 1;
 }
 .restore-button {
+    background-color: grey;
+    color: white;
+    font-size: 1em;
+    font-weight: bold;
+    border: 1.5px solid #e0e9e4;
+    border-radius: 4px;
+    box-shadow: inset 0.2em 0.2em 4em rgb(0,10,5);
     grid-area: 4 / 2 / span 1 / span 1;
 }
 .overlay-qr {
@@ -66,9 +115,12 @@
     height: 100%;
     top: 0;
     left: 0;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0,0,0,0.4);
 }
 #overlay img {
     width: 200px;
     height: 200px;
+    border: 4px solid #404944;
+    border-radius: 4px;
+    box-shadow: 15px 15px 20px rgb(20,20,20);
 }

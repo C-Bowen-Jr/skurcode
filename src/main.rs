@@ -336,13 +336,13 @@ fn App(cx: Scope) -> Element {
                         show_qr.set(true)
                     },
                     if action.get() == &Action::None {
-                        rsx!(textarea { // without rsx! says invalid
+                        rsx!(input { // without rsx! says invalid
                             value: "{selected_sku.read().sku}*{quantity}"
                         })
                     }
                     else {
                         action_text = action.get().get_string();
-                        rsx!(textarea {
+                        rsx!(input {
                             value: "{action_text}{selected_sku.read().sku}"
                         })
                     }
